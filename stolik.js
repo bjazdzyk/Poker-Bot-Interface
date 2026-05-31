@@ -165,6 +165,7 @@ async function game() {
 	
 	deal_cards()
 	
+	stage_id = 0
 	stage = "preflop"
 
     for (let s = 0; s < 4; s++) {
@@ -205,6 +206,8 @@ async function game() {
 			i = (i+1)%number_of_players
 			lp++
 		}
+		stage_id++
+		stage = stages[stage_id]
 
     }
 
