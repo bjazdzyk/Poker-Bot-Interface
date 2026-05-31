@@ -34,9 +34,44 @@ let pot = 0;
 let call_amt = 10;
 let stage = "preflop"
 let hands = [[], [], []]
-let table = [[], [], [], [], []]
+let hand_ids = [-1, -1, -1]
+let table = [[-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1]]
+let table_ids = [-1, -1, -1, -1, -1]
 
 let stages = ["PREFLOP", "FLOP", "TURN", "RIVER"]
+
+
+let used = {}
+let figures = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "D", "K", "A"]
+let colours = ["kier", "karo", "trefl", "pik"]
+
+function random_card(){
+	let x = Math.floor(Math.random()*13*4)
+	while(used[x] == 1){
+		x = Math.floor(Math.random()*13*4)
+	}
+	let col = colours[x%4]
+	let fig = figures[Math.floor(x/4)]
+	used[x] = 1
+	return [x,[fig, col]]
+}
+
+
+function deal_cards(){
+	used = {}
+	hands = [[], [], []]
+	table = [[-1, -1], [-1, -1], [-1, -1], [-1, -1], [-1, -1]]
+	hand_ids = [-1, -1, -1]
+	table_ids = [-1, -1, -1, -1, -1]
+	
+	for(let i=0; i<number_of_players; i++){
+		card1 = random_card()
+		card2 = random_card()
+		
+		hands[i] = [card1[1], card2[1]]
+		hand_ids[i] = [card1[0], card2[0]]
+	}
+}
 
 
 function call(i){
@@ -80,12 +115,13 @@ async function turn(i) {
 		balance: balance[i],
 		dealer_id,
 		pot,
-		to_call: (call_amt-called[i]),//
+		to_call: (call_amt-called[i]),
 		stage,
 		called,
 		in_game,
 		all_in,
 		hand: hands[i],
+		hand_id: hand_ids[i],
 		table
 		
 	}
@@ -93,7 +129,7 @@ async function turn(i) {
     send(bot, data);
 
     const action = await read(bot);
-    console.log(`Bot ${i}:`, action);
+    console.log(`Bot${i} ( ${hands[i][0]} ; ${hands[i][1]} ):`, action);
 
     if (action === "CALL") {
         call(i)
@@ -125,11 +161,13 @@ async function game() {
 	in_game = [1, 1, 1]
 	all_in = [0, 0, 0]
 	pot = 0;
-	call_amt = 10;
+	call_amt = 0;
+	
+	deal_cards()
+	
 	stage = "preflop"
 
     for (let s = 0; s < 4; s++) {
-        console.log(stages[s], ": ");
 		
 		let i = sb
 		let lp = 0
@@ -142,7 +180,23 @@ async function game() {
 			console.log(`Bot ${bb}: BIG BLIND -> ${big_blind}`);
 			
 			i = (bb+1)%number_of_players
+		}else if(s == 1){
+			for(let c=0; c<3; c++){
+				card = random_card()
+				table[c] = card[1]
+				table_ids[c] = card[0]
+			}
+		}else if(s == 2){
+			card = random_card()
+			table[3] = card[1]
+			table_ids[3] = card[0]
+		}else if(s == 3){
+			card = random_card()
+			table[4] = card[1]
+			table_ids[4] = card[0]
 		}
+		console.log(stages[s], ": ");
+		console.log(table)
 		
 		while(lp < number_of_players || called[i] < call_amt){
 			if(in_game[i]){
